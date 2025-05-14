@@ -1,57 +1,20 @@
-# vitamin-framework-lua
-vitamin 框架 lua版本
+### 如何安装lua包：
+    `luarocks install {name} --tree=.rocks`
 
-> 维他命框架是建立在依赖注入思想上的轻型MVC框架，设计初衷是为了提高代码的可读性及提高开发效率。
-
-## 模块说明
-
-### class
-实现了OOP语法的部分功能
+### 如何使包查找生效:
+入口文件添加如下代码
 ```lua
-Class -- OOP实现
-    + -- 定义一个类
-    + define(object)
-    + 
-    + -- 从类定义实例化
-    + new(object,...)
-    + 
-    + -- 从类定义取单例
-    + instance(nameOrObject)
-    + -- 继承
-    + -- base 基类
-    + -- object 当前类实现
-    + extend(base, object)
-    + -- 用限定名称反射出类定义
-    + getDefineByName(name)
-    + -- 取得该类的限定名称
-    + getQualifiedClassName(class)
-    + -- 取得该类基类的限定名称
-    + getQualifiedSuperclassName(class)
+package.path = "./.rocks/share/lua/5.4/?.lua;" ..  -- 主模块路径
+               "./.rocks/share/lua/5.4/?/init.lua;" ..  -- 包路径
+               package.path
 ```
 
-而对应的类结构应该看起来像这样
-```lua
-    -- 类定义
-    Class.define({
-        className="Item",
-        constructor=function()
-            -- todo
-        end
-    })
-
-    -- 类继承
-    local Item=Class.getDefineByName('Item');
-    local RedItem=Class.define(Item,{
-        className="RedItem",
-        constructor=function()
-            -- todo
-        end
-    })
-
-    -- 实例化
-    local redItem=Class.new(RedItem);
-
-```
+### 为lua添加oop封装：
+第三方`middleclass`库
+- 特点
+  - ⭐ 简洁、清晰、易读，使用量最多。
+  - 支持继承、构造函数、isInstanceOf 检查。
+  - 零依赖，非常适合游戏开发（如 LÖVE 框架）。
 
 ### array
 数组结构
@@ -144,49 +107,171 @@ EventEmiter -- 事件
     -- > { a:1,b:2 }
 ```
 
-## Vitamin示例
+### mvvm
+#### getter/setter 实现
+  ```lua
+  -- 要使用getter/setter,需要继承Object
+  local Item = class('Item', Object)
+  function Item:initialize()
+      Object.initialize(self)
+      self._itemName = "default" -- 先定义一个私有属性
+      -- 定义getter/setter 依次传入属性名、setter、getter
+      self:__defineProperty('itemName', -- 定义属性
+          function(value)
+              self._itemName = value
+          end,
+          function()
+              return self._itemName
+          end)
+  end
+
+  local item = Item:new()
+  item.itemName = 'something'
+  ```
+#### 装饰器实现
+  - 装饰器所有方法都需要大写字母以作区分
+  - 并建议写在类定义的下方,两个缩进
+比如:
+  ```lua
+  local ModuleMain = class('ModuleMain',ModuleBase)
+  ---- 装饰器
+      -- 绑定模块和模块数据
+      DECORATOR.MODULE(ModuleMain,MainData)
+      -- 绑定命令
+      DECORATOR.BIND_CMD(ModuleMain,Cmds.LoginCmd.Login,"onLogin")
+      -- 订阅数据
+      DECORATOR.DATA_SUBSCRIBE(ModuleMain,"ModuleLogin","username","username")
+    -- 创建完成
+    function ModuleMain:onCreate()
+    end
+  return ModuleMain
+  ```
+#### 反应属性实现
+  ```lua
+  local reactprop=ReactiveProperty:new()
+  -- 订阅
+  local obs=reactprop.subscribe(
+    function(value)
+      Logger.log("reactprop:",value)
+    end)
+  --更改
+  reactprop.setValue("hello")
+  --销毁观察者
+  obs.dispose()
+  ```
+#### 数据订阅实现
+  ```lua
+  local data=DataBase:new()
+  -- 订阅
+  local obs=data.subscribe("name",
+    function(value)
+      Logger.log("reactprop:",value)
+    end)
+  --更改
+  data.name="kevin"
+  --销毁观察者
+  obs.dispose()
+  ```
+#### 命令实现
+#### 其他功能
+  - 后面有时间实现下
+
+mvvm基本用法
 ```lua
-#!/usr/local/bin/lua
-
-require('src.vitamin.core.logger');
-require('src.vitamin.core.class');
-require('src.vitamin.core.array');
-require('src.vitamin.vitamin');
-
-Logger.line('Logger');
-
-
--- 定义数据模型
-Class.extend(Vitamin.ModelBase, {
-    className="ModelLogin",
-    data=1045,
-    initialize = function(self)
-        Logger.debug(self.className);
+---------------------登陆模块
+------- 模块数据
+local LoginData = class('LoginData',DataBase)
+    function LoginData:onCreate()
+        self.username=""
     end
-});
 
--- 定义数据模型
-Class.extend(Vitamin.ModelBase, {
-    className="ModelUser",
-    modelLogin = Inject,--声明模型注入
-    initialize = function(self)
-        Logger.info(self.modelLogin.data);
+------- 模块
+local ModuleLogin = class('ModuleLogin',ModuleBase)
+        --- 装饰器
+        DECORATOR.MODULE(ModuleLogin,LoginData)
+
+    function ModuleLogin:onCreate()
+
     end
-});
 
--- 定义视图组件
-ViewLogin = Class.extend(Vitamin.ViewBase, {
-    className="ViewLogin",
-    modelLogin = Inject('ModelLogin'),--声明模型注入的推荐用法
-    enter = function(self)
-        Logger.debug('modelLogin',self.modelLogin.data);
+    function ModuleLogin:loaded()
+        self.data.username="kevin.chen"
+        Logger.log("ModuleLogin loaded:",self.data.username)
+        self:execute(Cmds.LoginCmd.Login,self.data.username);
     end
-});
 
--- 初始化Vitamin框架
-Vitamin.initialize();
+return ModuleLogin
 
--- 进入视图
-ViewLogin:enter();
+---------------------主模块
+------- 模块数据
+local MainData = class('MainData',DataBase)
+    function MainData:onCreate()
 
+    end
+
+------- 模块
+local ModuleMain = class('ModuleMain',ModuleBase)
+---- 装饰器
+        -- 绑定模块和模块数据
+        DECORATOR.MODULE(ModuleMain,MainData)
+        -- 绑定命令
+        DECORATOR.BIND_CMD(ModuleMain,Cmds.LoginCmd.Login,"onLogin")
+        -- 订阅数据
+        DECORATOR.DATA_SUBSCRIBE(ModuleMain,"ModuleLogin","username","username")
+    -- 创建完成
+    function ModuleMain:onCreate()
+
+    end
+    function ModuleMain:onLogin(value)
+        Logger.log("ModuleMain onLogin:",self.username)
+    end
+return ModuleMain
+```
+测试代码:
+```lua
+local class = require 'middleclass'
+local Logger = require('src.core.logger');
+local Array = require('src.core.array');
+local EventEmiter = require('src.core.event');
+local class = require 'middleclass'
+local Object = require 'src.core.object'
+local Mvvm = require 'src.core.mvvm'.Mvvm
+local ModuleMap = require "src.example.modulemap"
+
+Logger.line('Array Test');
+
+local array = Array:new('a', 'b');
+Logger.log("array:", array:toString());
+array:push('c', 'd', 'e', 'f');
+Logger.log("array pushed:", array:toString());
+local s = array:splice(2, 5);
+Logger.log("array splice return:", s:toString());
+
+Logger.line('EventEmiter Test');
+
+local event = EventEmiter:new();
+event:on('INIT', function()
+    Logger.log('Got event: INIT')
+end);
+event:emit('INIT');
+
+
+Logger.line('MVVM Test');
+-- 初始化模块
+Mvvm.initialize(ModuleMap);
+
+-- 触发登陆操作
+local login = Mvvm.getModule("ModuleLogin")
+login:loaded()
+
+-- [-] ---------------Array Test---------------
+-- [LOG] array: [1 : a, 2 : b] (Len:2)
+-- [LOG] array pushed: [1 : a, 2 : b, 3 : c, 4 : d, 5 : e, 6 : f] (Len:6)
+-- [LOG] array splice return: [1 : b, 2 : c, 3 : d, 4 : e] (Len:4)
+-- [-] ------------EventEmiter Test------------
+-- [LOG] Got event: INIT
+-- [-] ----------------MVVM Test----------------
+-- [WARN] Not found [ ModuleLogin ] subscribes !
+-- [LOG] ModuleLogin loaded: kevin.chen
+-- [LOG] ModuleMain onLogin: kevin.chen
 ```
