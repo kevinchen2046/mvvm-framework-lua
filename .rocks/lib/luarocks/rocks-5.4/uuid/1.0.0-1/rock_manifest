@@ -1,0 +1,25 @@
+rock_manifest = {
+   docs = {
+      ["index.html"] = "2975c81a55cceef259bfccbee066e17c",
+      ["ldoc.css"] = "7060d11d773f591de4df1a6967ed5285",
+      modules = {
+         ["uuid.html"] = "666189610fe829542e70183faf3bc24e",
+         ["uuid.rng.html"] = "5c79d68bfadac8487ec2287106e4a51b"
+      },
+      topics = {
+         ["01-introduction.md.html"] = "28af500839f84e2df302625408ef9367",
+         ["CHANGELOG.md.html"] = "ec9f0101d9cdf77d75bc638f106d3977",
+         ["LICENSE.md.html"] = "50edace5d28108b51dd679d3ac1c3a1e"
+      }
+   },
+   lua = {
+      uuid = {
+         rng = {
+            ["init.lua"] = "8838e2ca86708a5c09fd4e101c505733",
+            ["sha1.lua"] = "71161c702f66cc92abc1113580bc052e"
+         }
+      },
+      ["uuid.lua"] = "4816bfa220e47eea03489145a56c5f56"
+   },
+   ["uuid-1.0.0-1.rockspec"] = "829b0af11091ac9210e3d91bf7c74eac"
+}

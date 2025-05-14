@@ -1,0 +1,99 @@
+commands = {}
+dependencies = {
+   ["lua-resty-timer"] = {
+      ["1.1.0-1"] = {}
+   },
+   middleclass = {
+      ["4.1.1-0"] = {
+         {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }
+      }
+   },
+   uuid = {
+      ["1.0.0-1"] = {
+         {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               },
+               {
+                  op = "<",
+                  version = {
+                     5, 5, string = "5.5"
+                  }
+               }
+            },
+            name = "lua"
+         }
+      }
+   }
+}
+modules = {
+   middleclass = {
+      "middleclass/4.1.1-0"
+   },
+   ["resty.timer"] = {
+      "lua-resty-timer/1.1.0-1"
+   },
+   uuid = {
+      "uuid/1.0.0-1"
+   },
+   ["uuid.rng.init"] = {
+      "uuid/1.0.0-1"
+   },
+   ["uuid.rng.sha1"] = {
+      "uuid/1.0.0-1"
+   }
+}
+repository = {
+   ["lua-resty-timer"] = {
+      ["1.1.0-1"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               ["resty.timer"] = "resty/timer.lua"
+            }
+         }
+      }
+   },
+   middleclass = {
+      ["4.1.1-0"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               middleclass = "middleclass.lua"
+            }
+         }
+      }
+   },
+   uuid = {
+      ["1.0.0-1"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               uuid = "uuid.lua",
+               ["uuid.rng.init"] = "uuid/rng/init.lua",
+               ["uuid.rng.sha1"] = "uuid/rng/sha1.lua"
+            }
+         }
+      }
+   }
+}
